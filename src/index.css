@@ -1,2 +1,21 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+/* Ramadan / Islamic theme – green gradient, soft shadows */
+@theme "light" {
+  --color-primary: #0d9488;
+  --color-primary-content: #ffffff;
+  --color-secondary: #059669;
+  --color-accent: #34d399;
+  --color-neutral: #134e4a;
+  --rounded-box: 1rem;
+  --rounded-btn: 0.75rem;
+  --rounded-badge: 9999px;
+  --shadow-btn: 0 4px 14px 0 rgba(13, 148, 136, 0.25);
+}
+
+:root {
+  --ramadan-gradient: linear-gradient(135deg, #0d9488 0%, #059669 50%, #047857 100%);
+  --ramadan-gradient-soft: linear-gradient(180deg, rgba(13, 148, 136, 0.08) 0%, rgba(5, 150, 105, 0.04) 100%);
+  --card-shadow: 0 10px 40px -12px rgba(13, 148, 136, 0.15);
+}

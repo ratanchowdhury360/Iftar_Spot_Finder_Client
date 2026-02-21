@@ -3,12 +3,14 @@ import Navber from "../Shared/Navber";
 
 
 const Root = () => {
-    return (
-        <div>
-            <Navber></Navber>
-            <Outlet></Outlet>
-        </div>
-    );
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navber />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+    </div>
+  );
 };
 
 export default Root;
