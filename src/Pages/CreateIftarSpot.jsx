@@ -5,7 +5,7 @@ import { useIftarSpots } from '../Context/IftarSpotsContext';
 import { IFTAR_ITEMS } from '../data/iftarItems';
 
 const CreateIftarSpot = () => {
-  const { user } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
   const { addSpot } = useIftarSpots();
   const navigate = useNavigate();
 
@@ -20,6 +20,28 @@ const CreateIftarSpot = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const showOthersInput = item === 'others';
+
+  if (!loading && !user) {
+    return (
+      <div className="container mx-auto max-w-2xl px-4 py-12">
+        <div className="bg-base-100 rounded-2xl shadow-lg border border-base-200/60 p-8 text-center">
+          <span className="text-4xl" aria-hidden>🔐</span>
+          <h1 className="text-xl font-bold text-base-content mt-4">লগইন প্রয়োজন</h1>
+          <p className="text-base-content/70 mt-2">
+            ইফতার স্পট নিবন্ধন করতে লগইন করুন। লগইন ছাড়া ফর্ম সাবমিট করা যাবে না।
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3 justify-center">
+            <Link to="/login" className="btn btn-primary rounded-xl">
+              লগইন
+            </Link>
+            <Link to="/" className="btn btn-ghost rounded-xl">
+              হোমে ফিরে যান
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,6 +79,7 @@ const CreateIftarSpot = () => {
         mapLink: mapLink.trim() || undefined,
         phone: phone.trim() || undefined,
         createdBy: user?.uid || user?.email || 'guest',
+        createdByEmail: user?.email || undefined,
         status: 'pending',
       });
       navigate('/', { state: { iftarCreated: true } });

@@ -6,7 +6,7 @@ export const IFTAR_ITEMS = [
   { key: 'gorurmangso', label: 'Gorur Mangso' },
   { key: 'budmuri', label: 'Bud Muri' },
   { key: 'chickenbiriyani', label: 'Chicken Biriyani' },
-  { key: 'khasirbiriyani', label: 'Khasir Biriyani' },
+  { key: 'khasirbiriyani', label: 'Mixed Food' },
   { key: 'misro', label: 'Misro' },
   { key: 'others', label: 'Others' },
 ];

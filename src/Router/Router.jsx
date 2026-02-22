@@ -1,10 +1,21 @@
-import { createBrowserRouter } from "react-router";
+/* eslint-disable react-refresh/only-export-components */
+import { createBrowserRouter, Link } from "react-router";
 import Root from "../Layout/Root";
 import Home from "../Pages/Home";
 import CreateIftarSpot from "../Pages/CreateIftarSpot";
 import MapView from "../Pages/MapView";
+import ArchivedIftar from "../Pages/ArchivedIftar";
 import SignIn from "../SignIn/SignIn";
 import SignUp from "../SignUp/SignUp";
+
+function MapErrorFallback() {
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 p-6 text-center">
+      <p className="text-base-content/80">ম্যাপ লোড হয়নি। পেজ রিফ্রেশ করে আবার চেষ্টা করুন।</p>
+      <Link to="/" className="btn btn-primary rounded-xl">হোমে ফিরে যান</Link>
+    </div>
+  );
+}
 
 export const router = createBrowserRouter([
   {
@@ -13,8 +24,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Home },
       { path: "create", Component: CreateIftarSpot },
-      { path: "spots", Component: Home },
-      { path: "map", Component: MapView },
+      { path: "archive", Component: ArchivedIftar },
+      { path: "map", Component: MapView, errorElement: <MapErrorFallback /> },
       { path: "login", Component: SignIn },
       { path: "signup", Component: SignUp },
     ],

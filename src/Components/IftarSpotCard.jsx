@@ -75,6 +75,14 @@ const IftarSpotCard = ({
             </a>
           </p>
         )}
+        {(spot?.createdByEmail || spot?.email) && (
+          <p className="flex items-center gap-1.5 text-sm text-base-content/80">
+            <span>📧</span>
+            <a href={`mailto:${spot.createdByEmail || spot.email}`} className="link link-primary truncate">
+              {spot.createdByEmail || spot.email}
+            </a>
+          </p>
+        )}
       </div>
 
       {/* Bottom: Like + Map + View Details */}

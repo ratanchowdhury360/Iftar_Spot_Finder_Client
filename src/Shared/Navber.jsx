@@ -10,7 +10,7 @@ const Navber = () => {
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/create', label: 'Create Iftar Spot' },
-    { path: '/spots', label: 'See All Iftar Spot' },
+    { path: '/archive', label: 'Archived Iftar' },
     { path: '/map', label: 'Map View' },
   ];
 

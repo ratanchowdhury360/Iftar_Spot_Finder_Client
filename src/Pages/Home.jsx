@@ -25,7 +25,9 @@ const Home = () => {
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const filteredAndSorted = useMemo(() => {
-    let list = [...spots].filter((s) => s.status === 'approved');
+    let list = [...spots].filter(
+      (s) => s.status === 'approved' && (!s.date || s.date >= todayStr)
+    );
 
     const q = search.trim().toLowerCase();
     if (q) {
@@ -99,38 +101,107 @@ const Home = () => {
           </div>
         </div>
       )}
-      {/* 1. Hero Section */}
-      <section className="relative py-12 sm:py-16 md:py-20 px-4 overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{ background: 'var(--ramadan-gradient)' }}
-        />
-        <div className="relative container mx-auto max-w-4xl text-center">
-          <Link
-            to="/create"
-            className="btn btn-lg md:btn-xl bg-primary text-primary-content border-0 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all rounded-2xl px-8"
-          >
-            👉 Iftar Spot নিবন্ধন করতে Create Form এ ক্লিক করুন
-          </Link>
-          <p className="mt-4 sm:mt-6 text-base sm:text-lg text-base-content/90 max-w-xl mx-auto">
-            আপনার আশেপাশের মসজিদে কোন দিন কি ইফতার দেওয়া হয় সহজেই জানুন
-          </p>
-        </div>
-      </section>
+      {/* 1️⃣ Compact Premium Hero Section */}
+<section className="relative py-10 sm:py-12 px-4 overflow-hidden">
+  <div
+    className="absolute inset-0 opacity-20"
+    style={{ background: 'var(--ramadan-gradient)' }}
+  />
 
-      {/* 2. Welcome Section */}
-      <section className="container mx-auto max-w-4xl px-4 py-8 sm:py-10">
-        <div className="bg-base-100/80 backdrop-blur rounded-2xl p-6 sm:p-8 shadow-md border border-base-200/60">
-          <h2 className="text-xl sm:text-2xl font-semibold text-base-content mb-3">
-            স্বাগতম
-          </h2>
-          <p className="text-base-content/85 leading-relaxed">
-            এটি একটি কমিউনিটি ভিত্তিক প্রজেক্ট। সবাই ইফতার স্পট এড ও এডিট করতে
-            পারবেন। আপনার এলাকার মসজিদের ইফতার তথ্য শেয়ার করে অন্যদের সাহায্য
-            করুন।
-          </p>
-        </div>
-      </section>
+  <div className="relative container mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 items-center gap-8">
+
+    {/* Left Content */}
+    <div className="space-y-5">
+      <h1 className="text-3xl sm:text-4xl font-bold text-base-content leading-tight">
+        🌙 আপনার এলাকার ইফতার স্পট খুঁজুন সহজে
+      </h1>
+
+      <p className="text-base sm:text-lg text-base-content/80 max-w-lg">
+        মসজিদের ইফতার সময়সূচি ও মেনু এক জায়গায়। প্রতিদিন আপডেট হওয়া তথ্য এখন হাতের নাগালে।
+      </p>
+
+      <div className="flex flex-wrap gap-3 pt-2">
+        <Link
+          to="/create"
+          className="btn bg-primary text-primary-content rounded-xl shadow-md hover:shadow-lg transition-all"
+        >
+          👉 নতুন ইফতার স্পট যুক্ত করুন
+        </Link>
+
+        <Link
+          to="/all"
+          className="btn btn-outline rounded-xl"
+        >
+          সকল স্পট দেখুন
+        </Link>
+      </div>
+
+      {/* Small Stats Row */}
+      <div className="flex flex-wrap gap-6 pt-4 text-sm text-base-content/70">
+        <span>🕌 {spots.length} Spot</span>
+        <span>📍 {new Set(spots.map(s => s.area)).size} Area</span>
+        <span>👥 Community Driven</span>
+      </div>
+    </div>
+
+    {/* Right Decorative Card */}
+    <div className="hidden lg:block">
+      <div className="bg-base-100/80 backdrop-blur rounded-3xl shadow-xl p-8 border border-base-200">
+        <h3 className="text-xl font-semibold mb-4">
+          কেন ব্যবহার করবেন?
+        </h3>
+        <ul className="space-y-3 text-base-content/80">
+          <li>✔ ইফতার মেনু এক নজরে</li>
+          <li>✔ তারিখ অনুযায়ী সাজানো</li>
+          <li>✔ পুরোনো স্পট স্বয়ংক্রিয়ভাবে আর্কাইভ</li>
+          <li>✔ কমিউনিটি ভিত্তিক তথ্য</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+{/* 2️⃣ Feature / Welcome Section (Compact & Attractive) */}
+<section className="container mx-auto max-w-6xl px-4 py-10">
+  <div className="text-center mb-8">
+    <h2 className="text-2xl sm:text-3xl font-bold text-base-content">
+      🤝 এটি একটি কমিউনিটি উদ্যোগ
+    </h2>
+    <p className="text-base-content/70 mt-2">
+      আপনার এলাকার ইফতার তথ্য শেয়ার করে অন্যদের সাহায্য করুন।
+    </p>
+  </div>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <div className="bg-base-100 rounded-2xl p-6 shadow-md border border-base-200 hover:shadow-lg transition">
+      <div className="text-3xl mb-3">🔍</div>
+      <h3 className="font-semibold text-lg mb-2">সহজে খুঁজুন</h3>
+      <p className="text-base-content/70 text-sm">
+        আইটেম, এলাকা ও তারিখ অনুযায়ী দ্রুত ইফতার স্পট খুঁজে নিন।
+      </p>
+    </div>
+
+    <div className="bg-base-100 rounded-2xl p-6 shadow-md border border-base-200 hover:shadow-lg transition">
+      <div className="text-3xl mb-3">📅</div>
+      <h3 className="font-semibold text-lg mb-2">তারিখ অনুযায়ী সাজানো</h3>
+      <p className="text-base-content/70 text-sm">
+        আজকের ইফতার আলাদা করে দেখুন এবং পুরোনো তথ্য আর্কাইভে সংরক্ষিত থাকবে।
+      </p>
+    </div>
+
+    <div className="bg-base-100 rounded-2xl p-6 shadow-md border border-base-200 hover:shadow-lg transition">
+      <div className="text-3xl mb-3">🗂</div>
+      <h3 className="font-semibold text-lg mb-2">স্বয়ংক্রিয় আর্কাইভ</h3>
+      <p className="text-base-content/70 text-sm">
+        যেসব ইফতার শেষ হয়ে গেছে সেগুলো স্বয়ংক্রিয়ভাবে আর্কাইভে চলে যাবে।
+      </p>
+    </div>
+
+  </div>
+</section>
 
       {/* 3. Sort + Filter Section (redesigned) */}
       <section className="container mx-auto max-w-6xl px-4 py-6 sm:py-8">
