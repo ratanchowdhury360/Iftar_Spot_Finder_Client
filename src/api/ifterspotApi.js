@@ -17,6 +17,8 @@ export const createSpot = async (spot) => {
     items: Array.isArray(spot.items) && spot.items.length ? spot.items : (spot.item ? [spot.item] : []),
     phone: spot.phone || undefined,
     mapLink: spot.mapLink || undefined,
+    lat: spot.lat != null && Number.isFinite(spot.lat) ? spot.lat : undefined,
+    lng: spot.lng != null && Number.isFinite(spot.lng) ? spot.lng : undefined,
     createdBy: spot.createdBy,
     createdByEmail: spot.createdByEmail,
     roleAtCreation: 'user',

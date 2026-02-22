@@ -22,7 +22,7 @@ const ArchivedIftar = () => {
   const handleDelete = (id) => deleteSpot(id);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-base-200/50 to-base-100">
+    <div className="min-h-screen bg-linear-to-b from-base-200/50 to-base-100">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:py-12">
         <h1 className="text-2xl sm:text-3xl font-bold text-base-content mb-2">
           Archived Iftar

@@ -3,8 +3,9 @@ import { useIftarSpots } from '../Context/IftarSpotsContext';
 import { mapLinkToCoords } from '../utils/mapLinkToCoords';
 import { getItemLabel } from '../data/iftarItems';
 
+// সব ডেটা (মার্কার, সার্চ, নিয়ার মি) শুধু ব্যাকেন্ড API থেকে: http://localhost:3000/ifterspot
 const MapView = () => {
-  const { spots } = useIftarSpots();
+  const { spots, loading: spotsLoading, error: spotsError } = useIftarSpots();
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
@@ -24,10 +25,13 @@ const MapView = () => {
   const spotsWithCoords = useMemo(() => {
     return spots
       .filter(
-        (s) => s.mapLink && (!s.date || s.date >= todayStr)
+        (s) => (!s.date || s.date >= todayStr) && (s.mapLink || (s.lat != null && s.lng != null))
       )
       .map((spot) => {
-        const coords = mapLinkToCoords(spot.mapLink);
+        const hasApiCoords = spot.lat != null && spot.lng != null && Number.isFinite(spot.lat) && Number.isFinite(spot.lng);
+        const coords = hasApiCoords
+          ? { lat: Number(spot.lat), lng: Number(spot.lng) }
+          : mapLinkToCoords(spot.mapLink);
         return coords ? { ...spot, ...coords } : null;
       })
       .filter(Boolean);
@@ -39,7 +43,9 @@ const MapView = () => {
     return spotsWithCoords.filter(
       (s) =>
         s.masjidName?.toLowerCase().includes(q) ||
-        s.area?.toLowerCase().includes(q)
+        s.area?.toLowerCase().includes(q) ||
+        (s.areaDetail && s.areaDetail.toLowerCase().includes(q)) ||
+        (s.items && s.items.some((it) => String(it).toLowerCase().includes(q)))
     );
   }, [spotsWithCoords, searchQuery]);
 
@@ -153,12 +159,24 @@ const MapView = () => {
           ইফতার স্পটগুলোর লোকেশন ম্যাপে পিন আকারে দেখানো হয়েছে। পিনে ক্লিক করে বিস্তারিত ও গুগল ম্যাপ লিংক পাবেন।
         </p>
 
+        {spotsError && (
+          <div className="alert alert-error rounded-xl mb-4">
+            <span>{spotsError}</span>
+          </div>
+        )}
+
+        {spotsLoading && (
+          <div className="flex justify-center py-8 mb-4">
+            <span className="loading loading-spinner loading-lg text-primary" />
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1 relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50">🔍</span>
             <input
               type="text"
-              placeholder="মসজিদ বা এলাকা দিয়ে খুঁজুন..."
+              placeholder="মসজিদ, এলাকা বা আইটেম দিয়ে খুঁজুন..."
               className="input input-bordered w-full pl-10 rounded-xl"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -197,12 +215,13 @@ const MapView = () => {
             className="h-[60vh] min-h-100 w-full rounded-2xl z-0"
             aria-label="Iftar spots map"
           />
-          {spotsWithCoords.length === 0 && (
-            <div className="p-6 text-center text-base-content/70">
-              কোনো ইফতার স্পটের ম্যাপ লিংক নেই। Create Form থেকে স্পট যোগ করার সময় গুগল ম্যাপ লিংক দিন।
+          {!spotsLoading && spotsWithCoords.length === 0 && (
+            <div className="p-6 text-center text-base-content/70 space-y-2 max-w-md mx-auto">
+              <p>কোনো ইফতার স্পটের ম্যাপে দেখানোর মতো লোকেশন নেই।</p>
+              <p className="text-sm">শর্ট লিংক দিলে Create বা Edit এ ল্যাট/লং দিন: গুগল ম্যাপে জায়গায় <strong>রাইট-ক্লিক</strong> করুন → ওপরের সংখ্যা দুটো (যেমন 23.73, 90.41) ক্লিক করলে কপি হয় → প্রথমটা Latitude, দ্বিতীয়টা Longitude বক্সে পেস্ট করুন।</p>
             </div>
           )}
-          {spotsWithCoords.length > 0 && filteredSpots.length === 0 && (
+          {!spotsLoading && spotsWithCoords.length > 0 && filteredSpots.length === 0 && (
             <div className="p-4 text-center text-base-content/70 text-sm">
               &quot;{searchQuery}&quot; এর সাথে মিলছে না। অন্য কিছু লিখে খুঁজুন।
             </div>

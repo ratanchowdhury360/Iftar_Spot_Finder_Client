@@ -10,6 +10,8 @@ const EditSpotModal = ({ spot, onClose, onSave }) => {
   const [item, setItem] = useState('');
   const [othersText, setOthersText] = useState('');
   const [mapLink, setMapLink] = useState('');
+  const [lat, setLat] = useState('');
+  const [lng, setLng] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
 
@@ -23,6 +25,8 @@ const EditSpotModal = ({ spot, onClose, onSave }) => {
     setItem(firstItem);
     setOthersText(spot.itemDisplay && !IFTAR_ITEMS.find((i) => i.key === firstItem) ? spot.itemDisplay : '');
     setMapLink(spot.mapLink || '');
+    setLat(spot.lat != null ? String(spot.lat) : '');
+    setLng(spot.lng != null ? String(spot.lng) : '');
     setPhone(spot.phone || '');
   }, [spot]);
 
@@ -46,6 +50,8 @@ const EditSpotModal = ({ spot, onClose, onSave }) => {
       return;
     }
     const itemKey = item === 'others' ? (othersText.trim().toLowerCase().replace(/\s+/g, '') || 'others') : item;
+    const latNum = lat.trim() ? parseFloat(lat.trim()) : undefined;
+    const lngNum = lng.trim() ? parseFloat(lng.trim()) : undefined;
     onSave(spot._id || spot.id, {
       masjidName: masjidName.trim(),
       area: area.trim(),
@@ -55,6 +61,8 @@ const EditSpotModal = ({ spot, onClose, onSave }) => {
       items: [itemKey],
       itemDisplay: item === 'others' ? othersText.trim() : undefined,
       mapLink: mapLink.trim() || undefined,
+      lat: latNum != null && Number.isFinite(latNum) ? latNum : undefined,
+      lng: lngNum != null && Number.isFinite(lngNum) ? lngNum : undefined,
       phone: phone.trim() || undefined,
     });
     onClose();
@@ -98,7 +106,19 @@ const EditSpotModal = ({ spot, onClose, onSave }) => {
           <div>
             <label className="label"><span className="label-text">Google Map link</span></label>
             <input type="url" className="input input-bordered w-full" value={mapLink} onChange={(e) => setMapLink(e.target.value)} />
+            <label className="label"><span className="label-text-alt text-base-content/60">শর্ট লিংক (goo.gl) থাকলে নিচে ল্যাট/লং দিন – ম্যাপে পিন দেখাবে</span></label>
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="label"><span className="label-text">Latitude (ম্যাপ পিন)</span></label>
+              <input type="text" inputMode="decimal" placeholder="23.7315" className="input input-bordered w-full" value={lat} onChange={(e) => setLat(e.target.value)} />
+            </div>
+            <div>
+              <label className="label"><span className="label-text">Longitude</span></label>
+              <input type="text" inputMode="decimal" placeholder="90.4113" className="input input-bordered w-full" value={lng} onChange={(e) => setLng(e.target.value)} />
+            </div>
+          </div>
+          <p className="text-xs text-base-content/60 mt-0.5">গুগল ম্যাপে জায়গায় রাইট-ক্লিক → ওপরের সংখ্যা (যেমন 23.73, 90.41) ক্লিক করলে কপি হয়। প্রথমটা Latitude, দ্বিতীয়টা Longitude।</p>
           <div>
             <label className="label"><span className="label-text">Phone</span></label>
             <input type="tel" className="input input-bordered w-full" value={phone} onChange={(e) => setPhone(e.target.value)} />

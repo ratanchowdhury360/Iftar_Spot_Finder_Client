@@ -17,6 +17,8 @@ const CreateIftarSpot = () => {
   const [item, setItem] = useState('');
   const [othersText, setOthersText] = useState('');
   const [mapLink, setMapLink] = useState('');
+  const [lat, setLat] = useState('');
+  const [lng, setLng] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -83,6 +85,8 @@ const CreateIftarSpot = () => {
     setSubmitting(true);
     try {
       const itemKey = item === 'others' ? (othersText.trim().toLowerCase().replace(/\s+/g, '') || 'others') : item;
+      const latNum = lat.trim() ? parseFloat(lat.trim()) : undefined;
+      const lngNum = lng.trim() ? parseFloat(lng.trim()) : undefined;
       await addSpot({
         masjidName: masjidName.trim(),
         area: area.trim(),
@@ -92,6 +96,8 @@ const CreateIftarSpot = () => {
         items: [itemKey],
         itemDisplay: item === 'others' ? othersText.trim() : undefined,
         mapLink: mapLink.trim(),
+        lat: latNum != null && Number.isFinite(latNum) ? latNum : undefined,
+        lng: lngNum != null && Number.isFinite(lngNum) ? lngNum : undefined,
         phone: phone.trim(),
         createdBy: user?.uid || user?.email || 'guest',
         createdByEmail: user?.email || undefined,
@@ -246,7 +252,7 @@ const CreateIftarSpot = () => {
               </label>
               <input
                 type="url"
-                placeholder="https://www.google.com/maps?q=..."
+                placeholder="https://www.google.com/maps?q=... অথবা maps.app.goo.gl/..."
                 className="input input-bordered w-full rounded-xl"
                 value={mapLink}
                 onChange={(e) => setMapLink(e.target.value)}
@@ -254,9 +260,50 @@ const CreateIftarSpot = () => {
               />
               <label className="label">
                 <span className="label-text-alt text-base-content/60">
-                  Option 1: গুগল ম্যাপ থেকে শেয়ার লিংক পেস্ট করুন
+                  শর্ট লিংক (maps.app.goo.gl) দিলে নিচে ল্যাট/লং দিন, নাহলে ম্যাপে পিন দেখাবে না।
                 </span>
               </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Latitude (optional – ম্যাপ পিনের জন্য)</span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="23.7315"
+                  className="input input-bordered w-full rounded-xl"
+                  value={lat}
+                  onChange={(e) => setLat(e.target.value)}
+                  disabled={submitting}
+                />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Longitude (optional)</span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="90.4113"
+                  className="input input-bordered w-full rounded-xl"
+                  value={lng}
+                  onChange={(e) => setLng(e.target.value)}
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+            <div className="bg-base-200/60 rounded-xl p-3 text-sm text-base-content/80 space-y-1">
+              <p className="font-medium text-base-content">কিভাবে ল্যাট/লং পাবেন (উদাহরণ):</p>
+              <ol className="list-decimal list-inside space-y-0.5">
+                <li>গুগল ম্যাপে আপনার মসজিদের জায়গাটা খুলুন (আপনার ম্যাপ লিংক দিয়ে)।</li>
+                <li>ম্যাপে ওই জায়গার ওপর <strong>রাইট-ক্লিক</strong> করুন।</li>
+                <li>নিচে একটা পপআপ আসবে – সেখানে ওপরের দিকে <strong>সংখ্যা দুটো</strong> দেখাবে, যেমন <strong>23.7315, 90.4113</strong>।</li>
+                <li>ওই সংখ্যায় ক্লিক করলেই কপি হয়ে যাবে। প্রথমটা = Latitude, দ্বিতীয়টা = Longitude।</li>
+                <li>Latitude বক্সে প্রথম সংখ্যা (যেমন 23.7315), Longitude বক্সে দ্বিতীয় সংখ্যা (যেমন 90.4113) পেস্ট করুন।</li>
+              </ol>
+              <p className="text-base-content/60 mt-1">উদাহরণ: বাইতুল মোকাররম = Latitude <code className="bg-base-300 px-1 rounded">23.7315</code>, Longitude <code className="bg-base-300 px-1 rounded">90.4113</code></p>
             </div>
           </div>
 
