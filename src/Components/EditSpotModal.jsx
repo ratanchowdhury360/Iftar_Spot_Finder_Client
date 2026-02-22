@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect } from 'react';
 import { IFTAR_ITEMS } from '../data/iftarItems';
 
@@ -45,7 +46,7 @@ const EditSpotModal = ({ spot, onClose, onSave }) => {
       return;
     }
     const itemKey = item === 'others' ? (othersText.trim().toLowerCase().replace(/\s+/g, '') || 'others') : item;
-    onSave(spot.id, {
+    onSave(spot._id || spot.id, {
       masjidName: masjidName.trim(),
       area: area.trim(),
       areaDetail: areaDetail.trim() || undefined,

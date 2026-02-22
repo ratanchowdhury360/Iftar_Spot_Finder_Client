@@ -1,48 +1,82 @@
-import React, { useState } from 'react';
-import { MOCK_IFTAR_SPOTS } from '../data/mockIftarSpots';
+import React, { useState, useEffect, useCallback } from 'react';
 import { IftarSpotsContext } from './IftarSpotsContext';
+import * as ifterspotApi from '../api/ifterspotApi';
 
 const IftarSpotsProvider = ({ children }) => {
-  const [spots, setSpots] = useState(MOCK_IFTAR_SPOTS);
+  const [spots, setSpots] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const addSpot = (spot) => {
-    const newSpot = {
+  const fetchSpots = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await ifterspotApi.getSpots();
+      setSpots(data);
+    } catch (err) {
+      setError(err.message || 'ডেটা লোড হয়নি');
+      setSpots([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSpots();
+  }, [fetchSpots]);
+
+  const addSpot = async (spot) => {
+    const payload = {
       ...spot,
-      id: String(Date.now()),
       items: Array.isArray(spot.items) && spot.items.length ? spot.items : (spot.item ? [spot.item] : []),
       likes: spot.likes || [],
       status: 'approved',
       roleAtCreation: 'user',
     };
-    setSpots((prev) => [newSpot, ...prev]);
-    return newSpot;
+    const created = await ifterspotApi.createSpot(payload);
+    setSpots((prev) => [created, ...prev]);
+    return created;
   };
 
-  const updateSpot = (spotId, data) => {
+  const updateSpot = async (spotId, data) => {
+    const updated = await ifterspotApi.updateSpot(spotId, data);
     setSpots((prev) =>
-      prev.map((s) => (s.id === spotId ? { ...s, ...data } : s))
+      prev.map((s) => ((s._id || s.id) === spotId ? { ...s, ...updated } : s))
     );
+    return updated;
   };
 
-  const deleteSpot = (spotId) => {
-    setSpots((prev) => prev.filter((s) => s.id !== spotId));
+  const deleteSpot = async (spotId) => {
+    await ifterspotApi.deleteSpot(spotId);
+    setSpots((prev) => prev.filter((s) => (s._id || s.id) !== spotId));
   };
 
-  const toggleLike = (spotId, userId) => {
+  const toggleLike = async (spotId, userId) => {
     if (!userId) return;
-    setSpots((prev) =>
-      prev.map((s) => {
-        if (s.id !== spotId) return s;
-        const likes = Array.isArray(s.likes) ? [...s.likes] : [];
-        const i = likes.indexOf(userId);
-        if (i >= 0) likes.splice(i, 1);
-        else likes.push(userId);
-        return { ...s, likes };
-      })
-    );
+    try {
+      const updated = await ifterspotApi.toggleLikeSpot(spotId, userId);
+      if (updated) {
+        setSpots((prev) =>
+          prev.map((s) => ((s._id || s.id) === spotId ? { ...s, ...updated } : s))
+        );
+      }
+    } catch {
+      // ignore
+    }
   };
 
-  const value = { spots, setSpots, addSpot, updateSpot, deleteSpot, toggleLike };
+  const value = {
+    spots,
+    setSpots,
+    loading,
+    error,
+    fetchSpots,
+    addSpot,
+    updateSpot,
+    deleteSpot,
+    toggleLike,
+  };
+
   return (
     <IftarSpotsContext.Provider value={value}>
       {children}

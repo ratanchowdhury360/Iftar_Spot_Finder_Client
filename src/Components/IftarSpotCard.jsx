@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useState } from 'react';
 import { IFTAR_ITEMS, getItemImageSrc, getItemLabel } from '../data/iftarItems';
 
@@ -42,7 +43,7 @@ const IftarSpotCard = ({
   };
 
   const handleLike = () => {
-    if (currentUserId) onLike?.(spot?.id);
+    if (currentUserId) onLike?.(spot?._id || spot?.id);
   };
 
   return (
@@ -54,7 +55,7 @@ const IftarSpotCard = ({
           className="w-full h-full object-cover"
           onError={() => setImgError(true)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
         <div className="absolute bottom-2 left-3 right-3">
           <span className="badge badge-md bg-primary/90 text-primary-content border-0">
             {itemLabel}
@@ -134,7 +135,7 @@ const IftarSpotCard = ({
         {canDelete && onDelete && (
           <button
             type="button"
-            onClick={() => onDelete(spot?.id)}
+            onClick={() => onDelete(spot?._id || spot?.id)}
             className="btn btn-sm btn-error btn-outline gap-1"
           >
             🗑 Delete

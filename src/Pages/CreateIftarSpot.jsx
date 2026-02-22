@@ -83,7 +83,7 @@ const CreateIftarSpot = () => {
     setSubmitting(true);
     try {
       const itemKey = item === 'others' ? (othersText.trim().toLowerCase().replace(/\s+/g, '') || 'others') : item;
-      addSpot({
+      await addSpot({
         masjidName: masjidName.trim(),
         area: area.trim(),
         areaDetail: areaDetail.trim(),

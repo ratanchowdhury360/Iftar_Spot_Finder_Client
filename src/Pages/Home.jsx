@@ -18,7 +18,7 @@ const SORT_OPTIONS = [
 const Home = () => {
   const location = useLocation();
   const { user } = useContext(AuthContext);
-  const { spots, toggleLike, updateSpot, deleteSpot } = useIftarSpots();
+  const { spots, loading: spotsLoading, error: spotsError, toggleLike, updateSpot, deleteSpot } = useIftarSpots();
   const [sortBy, setSortBy] = useState('date-asc');
   const [search, setSearch] = useState('');
   const [filterTodayOnly, setFilterTodayOnly] = useState(false);
@@ -308,7 +308,16 @@ const Home = () => {
         <h2 className="text-2xl sm:text-3xl font-bold text-base-content mb-6">
           ইফতার স্পট
         </h2>
-        {filteredAndSorted.length === 0 ? (
+        {spotsError && (
+          <div className="alert alert-error rounded-xl mb-6">
+            <span>{spotsError}</span>
+          </div>
+        )}
+        {spotsLoading ? (
+          <div className="flex justify-center py-16">
+            <span className="loading loading-spinner loading-lg text-primary" />
+          </div>
+        ) : filteredAndSorted.length === 0 ? (
           <div className="text-center py-16 bg-base-200/50 rounded-2xl">
             <p className="text-base-content/70">
               কোনো ইফতার স্পট খুঁজে পাওয়া যাচ্ছে না। ফিল্টার পরিবর্তন করুন অথবা
@@ -319,7 +328,7 @@ const Home = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {filteredAndSorted.map((spot) => (
               <IftarSpotCard
-                key={spot.id}
+                key={spot._id || spot.id}
                 spot={spot}
                 currentUserId={user?.email}
                 isAdmin={isAdmin(user)}
