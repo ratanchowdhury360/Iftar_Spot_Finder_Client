@@ -24,10 +24,7 @@ const MapView = () => {
   const spotsWithCoords = useMemo(() => {
     return spots
       .filter(
-        (s) =>
-          s.status === 'approved' &&
-          s.mapLink &&
-          (!s.date || s.date >= todayStr)
+        (s) => s.mapLink && (!s.date || s.date >= todayStr)
       )
       .map((spot) => {
         const coords = mapLinkToCoords(spot.mapLink);
@@ -73,7 +70,7 @@ const MapView = () => {
       const itemKey = spot.items?.[0] || spot.item;
       const itemName = itemKey ? getItemLabel(itemKey) : '';
       const popupContent = `
-        <div class="text-left min-w-[180px]">
+        <div class="text-left min-w-45">
           <p class="font-semibold text-base">🕌 ${spot.masjidName}</p>
           <p class="text-sm opacity-80">📍 ${spot.area}</p>
           ${itemName ? `<p class="text-xs opacity-70 mt-0.5">🍽 ${itemName}</p>` : ''}
@@ -197,7 +194,7 @@ const MapView = () => {
         <div className="bg-base-100 rounded-2xl shadow-lg border border-base-200/60 overflow-hidden">
           <div
             ref={mapRef}
-            className="h-[60vh] min-h-[400px] w-full rounded-2xl z-0"
+            className="h-[60vh] min-h-100 w-full rounded-2xl z-0"
             aria-label="Iftar spots map"
           />
           {spotsWithCoords.length === 0 && (

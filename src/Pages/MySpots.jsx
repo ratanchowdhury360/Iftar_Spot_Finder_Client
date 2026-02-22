@@ -1,31 +1,42 @@
 import React, { useMemo, useState, useContext } from 'react';
+import { Link } from 'react-router';
 import IftarSpotCard from '../Components/IftarSpotCard';
 import EditSpotModal from '../Components/EditSpotModal';
 import { useIftarSpots } from '../Context/IftarSpotsContext';
 import { AuthContext } from '../Context/AuthProvider';
 import { isAdmin } from '../utils/constants';
 
-const ArchivedIftar = () => {
+const MySpots = () => {
   const { user } = useContext(AuthContext);
   const { spots, toggleLike, updateSpot, deleteSpot } = useIftarSpots();
   const [editSpot, setEditSpot] = useState(null);
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  const archivedSpots = useMemo(() => {
-    return [...spots]
-      .filter((s) => s.date && s.date < todayStr)
-      .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  }, [spots, todayStr]);
+  const mySpots = useMemo(() => {
+    if (!user?.email) return [];
+    return [...spots].filter(
+      (s) => s.createdByEmail === user.email || s.createdBy === user.email
+    ).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  }, [spots, user?.email]);
+
+  if (!user) {
+    return (
+      <div className="container mx-auto max-w-2xl px-4 py-12 text-center">
+        <p className="text-base-content/70 mb-4">আপনার স্পট দেখতে লগইন করুন।</p>
+        <Link to="/login" className="btn btn-primary rounded-xl">লগইন</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-base-200/50 to-base-100">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:py-12">
         <h1 className="text-2xl sm:text-3xl font-bold text-base-content mb-2">
-          Archived Iftar
+          My Created Spots
         </h1>
         <p className="text-base-content/70 mb-8">
-          যে ইফতার স্পটের তারিখ পার হয়ে গেছে সেগুলো এখানে দেখানো হয়েছে। এক্সপায়ার হওয়া স্পট ডিলিট করা যায় না।
+          আপনি যে ইফতার স্পটগুলো তৈরি করেছেন ({mySpots.length} টি)। এডিট বা (তারিখ পার না হলে) ডিলিট করতে পারবেন।
         </p>
         {editSpot && (
           <EditSpotModal
@@ -34,21 +45,20 @@ const ArchivedIftar = () => {
             onSave={(id, data) => { updateSpot(id, data); setEditSpot(null); }}
           />
         )}
-        {archivedSpots.length === 0 ? (
+        {mySpots.length === 0 ? (
           <div className="text-center py-16 bg-base-200/50 rounded-2xl">
-            <p className="text-base-content/70">
-              কোনো আর্কাইভ ইফতার স্পট নেই।
-            </p>
+            <p className="text-base-content/70 mb-4">আপনি এখনও কোনো ইফতার স্পট তৈরি করেননি।</p>
+            <Link to="/create" className="btn btn-primary rounded-xl">নতুন স্পট যোগ করুন</Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {archivedSpots.map((spot) => (
+            {mySpots.map((spot) => (
               <IftarSpotCard
                 key={spot.id}
                 spot={spot}
                 currentUserId={user?.email}
                 isAdmin={isAdmin(user)}
-                isExpired
+                isExpired={spot.date && spot.date < todayStr}
                 onLike={(id) => toggleLike(id, user?.email)}
                 onEdit={setEditSpot}
                 onDelete={deleteSpot}
@@ -62,4 +72,4 @@ const ArchivedIftar = () => {
   );
 };
 
-export default ArchivedIftar;
+export default MySpots;

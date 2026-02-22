@@ -10,6 +10,7 @@ const Navber = () => {
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/create', label: 'Create Iftar Spot' },
+    ...(user ? [{ path: '/my-spots', label: 'My Spots' }] : []),
     { path: '/archive', label: 'Archived Iftar' },
     { path: '/map', label: 'Map View' },
   ];

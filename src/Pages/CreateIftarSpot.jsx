@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router';
+import Swal from 'sweetalert2';
 import { AuthContext } from '../Context/AuthProvider';
 import { useIftarSpots } from '../Context/IftarSpotsContext';
 import { IFTAR_ITEMS } from '../data/iftarItems';
@@ -11,6 +12,7 @@ const CreateIftarSpot = () => {
 
   const [masjidName, setMasjidName] = useState('');
   const [area, setArea] = useState('');
+  const [areaDetail, setAreaDetail] = useState('');
   const [date, setDate] = useState('');
   const [item, setItem] = useState('');
   const [othersText, setOthersText] = useState('');
@@ -66,21 +68,41 @@ const CreateIftarSpot = () => {
       setError('অন্যান্য আইটেমের নাম লিখুন।');
       return;
     }
+    if (!areaDetail.trim()) {
+      setError('এলাকার বিস্তারিত (গ্রাম/সেক্টর/ব্লক) দিন।');
+      return;
+    }
+    if (!mapLink.trim()) {
+      setError('গুগল ম্যাপ লিংক দিন।');
+      return;
+    }
+    if (!phone.trim()) {
+      setError('ফোন নম্বর দিন।');
+      return;
+    }
     setSubmitting(true);
     try {
       const itemKey = item === 'others' ? (othersText.trim().toLowerCase().replace(/\s+/g, '') || 'others') : item;
       addSpot({
         masjidName: masjidName.trim(),
         area: area.trim(),
+        areaDetail: areaDetail.trim(),
         date,
         item: itemKey,
         items: [itemKey],
         itemDisplay: item === 'others' ? othersText.trim() : undefined,
-        mapLink: mapLink.trim() || undefined,
-        phone: phone.trim() || undefined,
+        mapLink: mapLink.trim(),
+        phone: phone.trim(),
         createdBy: user?.uid || user?.email || 'guest',
         createdByEmail: user?.email || undefined,
-        status: 'pending',
+      });
+      await Swal.fire({
+        icon: 'success',
+        title: 'সফল!',
+        text: 'ইফতার স্পট সফলভাবে যোগ হয়েছে।',
+        confirmButtonText: 'ঠিক আছে',
+        timer: 2000,
+        timerProgressBar: true,
       });
       navigate('/', { state: { iftarCreated: true } });
     } catch (err) {
@@ -140,6 +162,19 @@ const CreateIftarSpot = () => {
                 className="input input-bordered w-full rounded-xl"
                 value={area}
                 onChange={(e) => setArea(e.target.value)}
+                disabled={submitting}
+              />
+            </div>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Area detail (optional)</span>
+              </label>
+              <input
+                type="text"
+                placeholder="যেমন: গ্রামের নাম, সেক্টর, ব্লক"
+                className="input input-bordered w-full rounded-xl"
+                value={areaDetail}
+                onChange={(e) => setAreaDetail(e.target.value)}
                 disabled={submitting}
               />
             </div>

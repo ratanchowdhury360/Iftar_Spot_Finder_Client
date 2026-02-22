@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { IFTAR_ITEMS, getItemImageSrc, getItemLabel } from '../data/iftarItems';
 
-// Spot has one item: spot.item (string) or spot.items?.[0]
 const getSpotItem = (spot) =>
   spot?.item ?? spot?.items?.[0];
 
-const getSpotItemLabel = (spot, getItemLabel) => {
+const getSpotItemLabel = (spot, getItemLabelFn) => {
   const item = getSpotItem(spot);
   if (spot?.itemDisplay) return spot.itemDisplay;
-  return item ? getItemLabel(item) : 'Iftar';
+  return item ? getItemLabelFn(item) : 'Iftar';
 };
 
 const IftarSpotCard = ({
   spot,
+  currentUserId,
+  isAdmin = false,
+  isExpired = false,
   onLike,
-  isLiked = false,
-  likeCount = 0,
+  onEdit,
+  onDelete,
   showViewDetails = true,
 }) => {
   const [imgError, setImgError] = useState(false);
@@ -26,13 +28,25 @@ const IftarSpotCard = ({
   const fallbackImage = '/Items/misro.png';
   const imageUrl = (imgSrc && !imgError) ? imgSrc : fallbackImage;
 
+  const likeCount = Array.isArray(spot?.likes) ? spot.likes.length : 0;
+  const isLiked = Boolean(currentUserId && spot?.likes?.includes(currentUserId));
+  const isCreator = Boolean(
+    currentUserId &&
+      (spot?.createdBy === currentUserId || spot?.createdByEmail === currentUserId)
+  );
+  const canDelete = !isExpired && (isCreator || isAdmin);
+  const canEdit = isCreator;
+
   const handleMapClick = () => {
     if (spot?.mapLink) window.open(spot.mapLink, '_blank', 'noopener,noreferrer');
   };
 
+  const handleLike = () => {
+    if (currentUserId) onLike?.(spot?.id);
+  };
+
   return (
     <article className="card bg-base-100 w-full max-w-md mx-auto shadow-lg rounded-2xl overflow-hidden border border-base-200/60 hover:shadow-xl hover:border-primary/20 transition-all duration-300">
-      {/* Top: Single item image */}
       <figure className="relative h-44 sm:h-52 md:h-56 overflow-hidden bg-base-200">
         <img
           src={imageUrl}
@@ -48,7 +62,6 @@ const IftarSpotCard = ({
         </div>
       </figure>
 
-      {/* Middle: Masjid info */}
       <div className="card-body p-4 sm:p-5 gap-2">
         <h2 className="card-title text-lg sm:text-xl text-base-content font-semibold leading-tight">
           🕌 {spot?.masjidName}
@@ -65,7 +78,7 @@ const IftarSpotCard = ({
         </p>
         <p className="flex items-center gap-1.5 text-sm text-base-content/80">
           <span>📍</span>
-          {spot?.area || '—'}
+          {spot?.areaDetail ? `${spot.area}, ${spot.areaDetail}` : (spot?.area || '—')}
         </p>
         {spot?.phone && (
           <p className="flex items-center gap-1.5 text-sm">
@@ -85,15 +98,16 @@ const IftarSpotCard = ({
         )}
       </div>
 
-      {/* Bottom: Like + Map + View Details */}
       <div className="card-actions p-4 sm:p-5 pt-0 flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => onLike?.(spot?.id)}
-          className={`btn btn-sm gap-1.5 flex-1 sm:flex-none ${isLiked ? 'btn-primary' : 'btn-outline btn-primary'}`}
+          onClick={handleLike}
+          disabled={!currentUserId}
+          title={!currentUserId ? 'লাইক দিতে লগইন করুন' : ''}
+          className={`btn btn-sm gap-1.5 flex-1 sm:flex-none ${!currentUserId ? 'btn-ghost' : isLiked ? 'btn-primary' : 'btn-outline btn-primary'}`}
           aria-label={isLiked ? 'Unlike' : 'Like'}
         >
-          <span className="text-base">{isLiked ? '👍' : '👍'}</span>
+          <span>👍</span>
           <span>Like</span>
           {likeCount > 0 && (
             <span className="badge badge-sm bg-base-100 text-primary border border-primary">
@@ -108,6 +122,24 @@ const IftarSpotCard = ({
         >
           🗺 Map
         </button>
+        {canEdit && onEdit && (
+          <button
+            type="button"
+            onClick={() => onEdit(spot)}
+            className="btn btn-sm btn-outline gap-1"
+          >
+            ✏️ Edit
+          </button>
+        )}
+        {canDelete && onDelete && (
+          <button
+            type="button"
+            onClick={() => onDelete(spot?.id)}
+            className="btn btn-sm btn-error btn-outline gap-1"
+          >
+            🗑 Delete
+          </button>
+        )}
         {showViewDetails && (
           <button type="button" className="btn btn-sm btn-ghost gap-1">
             👁 View Details

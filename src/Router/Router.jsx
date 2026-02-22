@@ -5,6 +5,7 @@ import Home from "../Pages/Home";
 import CreateIftarSpot from "../Pages/CreateIftarSpot";
 import MapView from "../Pages/MapView";
 import ArchivedIftar from "../Pages/ArchivedIftar";
+import MySpots from "../Pages/MySpots";
 import SignIn from "../SignIn/SignIn";
 import SignUp from "../SignUp/SignUp";
 
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
       { index: true, Component: Home },
       { path: "create", Component: CreateIftarSpot },
       { path: "archive", Component: ArchivedIftar },
+      { path: "my-spots", Component: MySpots },
       { path: "map", Component: MapView, errorElement: <MapErrorFallback /> },
       { path: "login", Component: SignIn },
       { path: "signup", Component: SignUp },

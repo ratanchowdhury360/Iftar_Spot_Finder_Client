@@ -1,7 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router';
 import IftarSpotCard from '../Components/IftarSpotCard';
+import EditSpotModal from '../Components/EditSpotModal';
 import { useIftarSpots } from '../Context/IftarSpotsContext';
+import { AuthContext } from '../Context/AuthProvider';
+import { isAdmin } from '../utils/constants';
 import { IFTAR_ITEMS } from '../data/iftarItems';
 
 const SORT_OPTIONS = [
@@ -14,20 +17,19 @@ const SORT_OPTIONS = [
 
 const Home = () => {
   const location = useLocation();
-  const { spots } = useIftarSpots();
+  const { user } = useContext(AuthContext);
+  const { spots, toggleLike, updateSpot, deleteSpot } = useIftarSpots();
   const [sortBy, setSortBy] = useState('date-asc');
   const [search, setSearch] = useState('');
   const [filterTodayOnly, setFilterTodayOnly] = useState(false);
   const [filterItem, setFilterItem] = useState('');
   const [filterArea, setFilterArea] = useState('');
-  const [likedIds, setLikedIds] = useState(() => new Set());
+  const [editSpot, setEditSpot] = useState(null);
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const filteredAndSorted = useMemo(() => {
-    let list = [...spots].filter(
-      (s) => s.status === 'approved' && (!s.date || s.date >= todayStr)
-    );
+    let list = [...spots].filter((s) => !s.date || s.date >= todayStr);
 
     const q = search.trim().toLowerCase();
     if (q) {
@@ -83,23 +85,25 @@ const Home = () => {
     setSearch('');
   };
 
-  const handleLike = (id) => {
-    setLikedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
+  const handleLike = (id) => toggleLike(id, user?.email);
+  const handleSaveEdit = (id, data) => updateSpot(id, data);
+  const handleDelete = (id) => deleteSpot(id);
 
   return (
     <div className="min-h-screen bg-linear-to-b from-base-200/50 to-base-100">
       {location.state?.iftarCreated && (
         <div className="container mx-auto max-w-4xl px-4 pt-4">
           <div className="alert alert-success rounded-xl shadow">
-            <span>ইফতার স্পট জমা হয়েছে। অ্যাডমিন অ্যাপ্রুভ করলে হোমপেজে দেখাবে।</span>
+            <span>ইফতার স্পট যোগ হয়েছে।</span>
           </div>
         </div>
+      )}
+      {editSpot && (
+        <EditSpotModal
+          spot={editSpot}
+          onClose={() => setEditSpot(null)}
+          onSave={handleSaveEdit}
+        />
       )}
       {/* 1️⃣ Compact Premium Hero Section */}
 <section className="relative py-10 sm:py-12 px-4 overflow-hidden">
@@ -129,7 +133,7 @@ const Home = () => {
         </Link>
 
         <Link
-          to="/all"
+          to="/archive"
           className="btn btn-outline rounded-xl"
         >
           সকল স্পট দেখুন
@@ -317,13 +321,12 @@ const Home = () => {
               <IftarSpotCard
                 key={spot.id}
                 spot={spot}
+                currentUserId={user?.email}
+                isAdmin={isAdmin(user)}
+                isExpired={spot.date && spot.date < todayStr}
                 onLike={handleLike}
-                isLiked={likedIds.has(spot.id)}
-                likeCount={
-                  likedIds.has(spot.id)
-                    ? (spot.likes?.length || 0) + 1
-                    : spot.likes?.length || 0
-                }
+                onEdit={setEditSpot}
+                onDelete={handleDelete}
                 showViewDetails
               />
             ))}
