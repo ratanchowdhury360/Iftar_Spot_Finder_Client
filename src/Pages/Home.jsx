@@ -1,15 +1,18 @@
 /* eslint-disable no-unused-vars */
-import React, { useMemo, useState, useContext } from 'react';
+import React, { useEffect, useMemo, useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router';
 import Swal from 'sweetalert2';
 import IftarSpotCard from '../Components/IftarSpotCard';
 import EditSpotModal from '../Components/EditSpotModal';
+import ReviewCard from '../Components/ReviewCard';
 import { useIftarSpots } from '../Context/IftarSpotsContext';
 import { AuthContext } from '../Context/AuthProvider';
 import { isAdmin } from '../utils/constants';
 import { IFTAR_ITEMS } from '../data/iftarItems';
+import * as reviewApi from '../api/reviewApi';
 
 const CARDS_PER_PAGE = 15;
+const REVIEWS_PER_PAGE = 6;
 
 const SORT_OPTIONS = [
   { value: 'date-asc', label: 'Date (নিকটতম প্রথম)' },
@@ -30,6 +33,10 @@ const Home = () => {
   const [filterArea, setFilterArea] = useState('');
   const [editSpot, setEditSpot] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentReviewPage, setCurrentReviewPage] = useState(1);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState('');
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -37,6 +44,22 @@ const Home = () => {
     () => spots.filter((s) => !s.date || s.date >= todayStr),
     [spots, todayStr]
   );
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setReviewsLoading(true);
+        setReviewsError('');
+        const data = await reviewApi.getAllReviews();
+        setReviews(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setReviewsError('রিভিউ লোড করা যাচ্ছে না। পরে আবার চেষ্টা করুন।');
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
 
   const filteredAndSorted = useMemo(() => {
     let list = [...spots].filter((s) => !s.date || s.date >= todayStr);
@@ -93,6 +116,55 @@ const Home = () => {
     const start = (safePage - 1) * CARDS_PER_PAGE;
     return filteredAndSorted.slice(start, start + CARDS_PER_PAGE);
   }, [filteredAndSorted, safePage]);
+
+  const sortedReviews = useMemo(
+    () =>
+      [...reviews].sort(
+        (a, b) =>
+          new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
+      ),
+    [reviews],
+  );
+
+  const totalReviewItems = sortedReviews.length;
+  const totalReviewPages = Math.max(1, Math.ceil(totalReviewItems / REVIEWS_PER_PAGE));
+  const safeReviewPage = Math.min(Math.max(1, currentReviewPage), totalReviewPages);
+  const paginatedReviews = useMemo(() => {
+    const start = (safeReviewPage - 1) * REVIEWS_PER_PAGE;
+    return sortedReviews.slice(start, start + REVIEWS_PER_PAGE);
+  }, [sortedReviews, safeReviewPage]);
+
+  const handleAdminDeleteReview = async (id) => {
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'নিশ্চিত কি?',
+      text: 'এই রিভিউ ডিলিট করলে এটি চিরতরে মুছে যাবে।',
+      showCancelButton: true,
+      confirmButtonText: 'হ্যাঁ, ডিলিট করুন',
+      cancelButtonText: 'বাতিল',
+      confirmButtonColor: '#dc2626',
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await reviewApi.deleteReview(id);
+      setReviews((prev) => prev.filter((r) => (r._id || r.id) !== id));
+      await Swal.fire({
+        icon: 'success',
+        title: 'সফল!',
+        text: 'রিভিউ ডিলিট হয়েছে।',
+        timer: 2000,
+        timerProgressBar: true,
+        confirmButtonText: 'ঠিক আছে',
+      });
+    } catch {
+      await Swal.fire({
+        icon: 'error',
+        title: 'দুঃখিত!',
+        text: 'রিভিউ ডিলিট করা যায়নি। পরে আবার চেষ্টা করুন।',
+        confirmButtonText: 'ঠিক আছে',
+      });
+    }
+  };
 
   const hasActiveFilters =
     filterTodayOnly || filterItem !== '' || filterArea.trim() !== '';
@@ -347,6 +419,74 @@ const Home = () => {
                   className="btn btn-sm btn-outline"
                   disabled={safePage >= totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  পরের →
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {/* 5. Review Section (before footer) */}
+      <section className="container mx-auto max-w-6xl px-4 sm:px-6 md:px-6 lg:px-8 pb-10 sm:pb-12 md:pb-14">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-5 md:mb-6">
+          <h2 className="text-xl sm:text-2xl md:text-2xl font-semibold text-base-content">ব্যবহারকারীদের রিভিউ</h2>
+          {user && (
+            <Link to="/my-review" className="btn btn-sm btn-outline rounded-xl">
+              ✍️ আপনার রিভিউ দিন
+            </Link>
+          )}
+        </div>
+
+        {reviewsError && (
+          <div className="alert alert-error rounded-xl mb-4 text-sm">
+            <span>{reviewsError}</span>
+          </div>
+        )}
+
+        {reviewsLoading ? (
+          <div className="flex justify-center py-10">
+            <span className="loading loading-spinner loading-lg text-primary" />
+          </div>
+        ) : sortedReviews.length === 0 ? (
+          <p className="text-base-content/70 text-sm">
+            এখনও কোনো রিভিউ নেই। প্রথম রিভিউটি দিতে পারেন আপনি।
+          </p>
+        ) : (
+          <>
+            <p className="text-base-content/70 text-sm mb-3">
+              দেখাচ্ছি {((safeReviewPage - 1) * REVIEWS_PER_PAGE) + 1}–{Math.min(safeReviewPage * REVIEWS_PER_PAGE, totalReviewItems)} (মোট {totalReviewItems} রিভিউ)
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+              {paginatedReviews.map((review) => (
+                <ReviewCard
+                  key={review._id || review.id}
+                  review={review}
+                  variant="compact"
+                  showAdminDelete={isAdmin(user)}
+                  onAdminDelete={handleAdminDeleteReview}
+                />
+              ))}
+            </div>
+            {totalReviewPages > 1 && (
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline"
+                  disabled={safeReviewPage <= 1}
+                  onClick={() => setCurrentReviewPage((p) => Math.max(1, p - 1))}
+                >
+                  ← আগে
+                </button>
+                <span className="px-4 py-2 text-sm text-base-content/80">
+                  পেজ {safeReviewPage} / {totalReviewPages}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline"
+                  disabled={safeReviewPage >= totalReviewPages}
+                  onClick={() => setCurrentReviewPage((p) => Math.min(totalReviewPages, p + 1))}
                 >
                   পরের →
                 </button>
