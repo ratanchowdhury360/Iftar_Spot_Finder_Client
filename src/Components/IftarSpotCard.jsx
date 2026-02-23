@@ -2,6 +2,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useState } from 'react';
 import { IFTAR_ITEMS, getItemImageSrc, getItemLabel } from '../data/iftarItems';
+import SpotComments from './SpotComments';
 
 const getSpotItem = (spot) =>
   spot?.item ?? spot?.items?.[0];
@@ -142,11 +143,14 @@ const IftarSpotCard = ({
             🗑 Delete
           </button>
         )}
-        {/* {showViewDetails && (
-          <button type="button" className="btn btn-sm btn-ghost gap-1">
-            👁 View Details
-          </button>
-        )} */}
+      </div>
+
+      <div className="px-4 sm:px-5 pb-4 sm:pb-5">
+        <SpotComments
+          spotId={spot?._id || spot?.id}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+        />
       </div>
     </article>
   );
