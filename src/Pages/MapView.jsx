@@ -3,7 +3,7 @@ import { useIftarSpots } from '../Context/IftarSpotsContext';
 import { mapLinkToCoords } from '../utils/mapLinkToCoords';
 import { getItemLabel } from '../data/iftarItems';
 
-// সব ডেটা (মার্কার, সার্চ, নিয়ার মি) শুধু ব্যাকেন্ড API থেকে: http://localhost:3000/ifterspot
+// সব ডেটা (মার্কার, সার্চ, নিয়ার মি) শুধু ব্যাকেন্ড API থেকে: https://iftar-spot-finder-server.onrender.com/ifterspot
 const MapView = () => {
   const { spots, loading: spotsLoading, error: spotsError } = useIftarSpots();
   const mapRef = useRef(null);

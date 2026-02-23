@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'https://iftar-spot-finder-server.onrender.com';
 const COMMENT_URL = `${BASE_URL}/comment`;
 
 export const getCommentsBySpotId = async (spotId) => {

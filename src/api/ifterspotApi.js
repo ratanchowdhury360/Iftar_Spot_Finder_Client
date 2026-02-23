@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'https://iftar-spot-finder-server.onrender.com';
 const IFTAR_SPOT_URL = `${BASE_URL}/ifterspot`;
 
 export const getSpots = async () => {

@@ -30,7 +30,7 @@ const MyReview = () => {
         setListError('');
         const data = await reviewApi.getUserReviews(userEmail);
         setReviews(Array.isArray(data) ? data : []);
-      } catch (err) {
+      } catch {
         setListError('রিভিউ লোড করা যাচ্ছে না। পরে আবার চেষ্টা করুন।');
       } finally {
         setListLoading(false);
@@ -80,8 +80,9 @@ const MyReview = () => {
           confirmButtonText: 'ঠিক আছে',
         });
       } else {
-        const created = await reviewApi.createReview(payload);
-        setReviews((prev) => [created, ...prev]);
+        await reviewApi.createReview(payload);
+        const data = await reviewApi.getUserReviews(userEmail);
+        setReviews(Array.isArray(data) ? data : []);
         await Swal.fire({
           icon: 'success',
           title: 'সফল!',
@@ -93,7 +94,7 @@ const MyReview = () => {
       }
       setComment('');
       setRating(5);
-    } catch (err) {
+    } catch {
       setFormError('রিভিউ সেভ করা যাচ্ছে না। পরে আবার চেষ্টা করুন।');
     } finally {
       setSubmitLoading(false);
