@@ -1,11 +1,15 @@
+/* eslint-disable no-unused-vars */
 import React, { useMemo, useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router';
+import Swal from 'sweetalert2';
 import IftarSpotCard from '../Components/IftarSpotCard';
 import EditSpotModal from '../Components/EditSpotModal';
 import { useIftarSpots } from '../Context/IftarSpotsContext';
 import { AuthContext } from '../Context/AuthProvider';
 import { isAdmin } from '../utils/constants';
 import { IFTAR_ITEMS } from '../data/iftarItems';
+
+const CARDS_PER_PAGE = 15;
 
 const SORT_OPTIONS = [
   { value: 'date-asc', label: 'Date (নিকটতম প্রথম)' },
@@ -25,8 +29,14 @@ const Home = () => {
   const [filterItem, setFilterItem] = useState('');
   const [filterArea, setFilterArea] = useState('');
   const [editSpot, setEditSpot] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  const activeSpots = useMemo(
+    () => spots.filter((s) => !s.date || s.date >= todayStr),
+    [spots, todayStr]
+  );
 
   const filteredAndSorted = useMemo(() => {
     let list = [...spots].filter((s) => !s.date || s.date >= todayStr);
@@ -75,6 +85,15 @@ const Home = () => {
     todayStr,
   ]);
 
+  const totalItems = filteredAndSorted.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / CARDS_PER_PAGE));
+  // Clamp page when results shrink (e.g. after filter change)
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const paginatedSpots = useMemo(() => {
+    const start = (safePage - 1) * CARDS_PER_PAGE;
+    return filteredAndSorted.slice(start, start + CARDS_PER_PAGE);
+  }, [filteredAndSorted, safePage]);
+
   const hasActiveFilters =
     filterTodayOnly || filterItem !== '' || filterArea.trim() !== '';
 
@@ -83,11 +102,43 @@ const Home = () => {
     setFilterItem('');
     setFilterArea('');
     setSearch('');
+    setCurrentPage(1);
   };
 
   const handleLike = (id) => toggleLike(id, user?.email);
-  const handleSaveEdit = (id, data) => updateSpot(id, data);
-  const handleDelete = (id) => deleteSpot(id);
+  const handleSaveEdit = async (id, data) => {
+    await updateSpot(id, data);
+    setEditSpot(null);
+    await Swal.fire({
+      icon: 'success',
+      title: 'সফল!',
+      text: 'ইফতার স্পট সফলভাবে আপডেট হয়েছে।',
+      confirmButtonText: 'ঠিক আছে',
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  };
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'নিশ্চিত কি?',
+      text: 'ইফতার স্পট ডিলিট করলে এটি চিরতরে মুছে যাবে।',
+      showCancelButton: true,
+      confirmButtonText: 'হ্যাঁ, ডিলিট করুন',
+      cancelButtonText: 'বাতিল',
+      confirmButtonColor: '#dc2626',
+    });
+    if (!result.isConfirmed) return;
+    await deleteSpot(id);
+    await Swal.fire({
+      icon: 'success',
+      title: 'সফল!',
+      text: 'ইফতার স্পট সফলভাবে ডিলিট হয়েছে।',
+      confirmButtonText: 'ঠিক আছে',
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-b from-base-200/50 to-base-100">
@@ -102,211 +153,145 @@ const Home = () => {
         <EditSpotModal
           spot={editSpot}
           onClose={() => setEditSpot(null)}
-          onSave={handleSaveEdit}
+          onSave={async (id, data) => {
+            await handleSaveEdit(id, data);
+          }}
         />
       )}
-      {/* 1️⃣ Compact Premium Hero Section */}
-<section className="relative py-10 sm:py-12 px-4 overflow-hidden">
+{/* 1️⃣ Ultra Compact Hero Section */}
+<section className="relative py-4 px-4 overflow-hidden">
   <div
-    className="absolute inset-0 opacity-20"
+    className="absolute inset-0 opacity-10"
     style={{ background: 'var(--ramadan-gradient)' }}
   />
 
-  <div className="relative container mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 items-center gap-8">
+  <div className="relative container mx-auto max-w-6xl text-center space-y-6">
+    <h1 className="text-3xl sm:text-4xl font-bold leading-tight">
+      🌙 আপনার এলাকার ইফতার স্পট দেখুন
+    </h1>
 
-    {/* Left Content */}
-    <div className="space-y-5">
-      <h1 className="text-3xl sm:text-4xl font-bold text-base-content leading-tight">
-        🌙 আপনার এলাকার ইফতার স্পট খুঁজুন সহজে
-      </h1>
+    <p className="text-base sm:text-lg text-base-content/70 max-w-2xl mx-auto">
+      মসজিদের ইফতার মেনু, তারিখ ও লোকেশন সহজে দেখুন — এবং নিজের এলাকার তথ্য যোগ করুন।
+    </p>
 
-      <p className="text-base sm:text-lg text-base-content/80 max-w-lg">
-        মসজিদের ইফতার সময়সূচি ও মেনু এক জায়গায়। প্রতিদিন আপডেট হওয়া তথ্য এখন হাতের নাগালে।
-      </p>
+    <div className="flex justify-center gap-3 flex-wrap">
+      <Link
+        to="/create"
+        className="btn btn-primary rounded-xl shadow-md"
+      >
+        ➕ ইফতার স্পট যোগ করুন
+      </Link>
 
-      <div className="flex flex-wrap gap-3 pt-2">
-        <Link
-          to="/create"
-          className="btn bg-primary text-primary-content rounded-xl shadow-md hover:shadow-lg transition-all"
-        >
-          👉 নতুন ইফতার স্পট যুক্ত করুন
-        </Link>
-
-        <Link
-          to="/archive"
-          className="btn btn-outline rounded-xl"
-        >
-          সকল স্পট দেখুন
-        </Link>
-      </div>
-
-      {/* Small Stats Row */}
-      <div className="flex flex-wrap gap-6 pt-4 text-sm text-base-content/70">
-        <span>🕌 {spots.length} Spot</span>
-        <span>📍 {new Set(spots.map(s => s.area)).size} Area</span>
-        <span>👥 Community Driven</span>
-      </div>
     </div>
 
-    {/* Right Decorative Card */}
-    <div className="hidden lg:block">
-      <div className="bg-base-100/80 backdrop-blur rounded-3xl shadow-xl p-8 border border-base-200">
-        <h3 className="text-xl font-semibold mb-4">
-          কেন ব্যবহার করবেন?
-        </h3>
-        <ul className="space-y-3 text-base-content/80">
-          <li>✔ ইফতার মেনু এক নজরে</li>
-          <li>✔ তারিখ অনুযায়ী সাজানো</li>
-          <li>✔ পুরোনো স্পট স্বয়ংক্রিয়ভাবে আর্কাইভ</li>
-          <li>✔ কমিউনিটি ভিত্তিক তথ্য</li>
-        </ul>
-      </div>
+    {/* Mini Stats (non-expired spots only) */}
+    <div className="flex justify-center gap-6 pt-4 text-sm text-base-content/60">
+      <span>🕌 {activeSpots.length} Spot</span>
+      <span>📍 {new Set(activeSpots.map((s) => s.area)).size} Area</span>
+      <span>❤️ Community Driven</span>
     </div>
-
   </div>
 </section>
 
 
-{/* 2️⃣ Feature / Welcome Section (Compact & Attractive) */}
-<section className="container mx-auto max-w-6xl px-4 py-10">
-  <div className="text-center mb-8">
-    <h2 className="text-2xl sm:text-3xl font-bold text-base-content">
+
+{/* 2️⃣ Minimal Welcome Section */}
+<section className="container mx-auto max-w-6xl px-4 pb-10">
+  <div className="bg-base-100 border border-base-200 rounded-2xl shadow-sm p-6 text-center">
+    <h2 className="text-xl sm:text-2xl font-semibold mb-3">
       🤝 এটি একটি কমিউনিটি উদ্যোগ
     </h2>
-    <p className="text-base-content/70 mt-2">
-      আপনার এলাকার ইফতার তথ্য শেয়ার করে অন্যদের সাহায্য করুন।
+
+    <p className="text-base-content/70 max-w-xl mx-auto text-sm sm:text-base">
+      আপনার এলাকার ইফতার তথ্য শেয়ার করুন এবং অন্যদের সাহায্য করুন। 
+      প্রতিদিন আপডেট হওয়া তথ্য এখন সবার জন্য উন্মুক্ত।
     </p>
   </div>
+</section>
 
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
-    <div className="bg-base-100 rounded-2xl p-6 shadow-md border border-base-200 hover:shadow-lg transition">
-      <div className="text-3xl mb-3">🔍</div>
-      <h3 className="font-semibold text-lg mb-2">সহজে খুঁজুন</h3>
-      <p className="text-base-content/70 text-sm">
-        আইটেম, এলাকা ও তারিখ অনুযায়ী দ্রুত ইফতার স্পট খুঁজে নিন।
-      </p>
+      {/* 3. Sort + Filter Section (redesigned) */}
+      <section className="container mx-auto max-w-6xl px-4 py-6">
+  <div className="bg-base-100/70 backdrop-blur rounded-3xl shadow-sm border border-base-200 p-5 space-y-5">
+
+    {/* Top Row */}
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <h3 className="text-base sm:text-lg font-semibold">
+        🔍 Filter Iftar Spots
+      </h3>
+
+      {hasActiveFilters && (
+        <button
+          onClick={clearFilters}
+          className="text-sm text-primary hover:underline"
+        >
+          Reset All
+        </button>
+      )}
     </div>
 
-    <div className="bg-base-100 rounded-2xl p-6 shadow-md border border-base-200 hover:shadow-lg transition">
-      <div className="text-3xl mb-3">📅</div>
-      <h3 className="font-semibold text-lg mb-2">তারিখ অনুযায়ী সাজানো</h3>
-      <p className="text-base-content/70 text-sm">
-        আজকের ইফতার আলাদা করে দেখুন এবং পুরোনো তথ্য আর্কাইভে সংরক্ষিত থাকবে।
-      </p>
+    {/* Search + Today */}
+    <div className="flex flex-col sm:flex-row gap-3">
+
+      {/* Search */}
+      <div className="flex-1">
+        <input
+          type="text"
+          placeholder="Masjid বা Area দিয়ে খুঁজুন..."
+          className="input input-bordered w-full rounded-xl"
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+        />
+      </div>
+
+      {/* Today Only Toggle */}
+      <label className="flex items-center gap-2 px-4 rounded-xl border border-base-300 cursor-pointer hover:bg-base-200 transition">
+        <input
+          type="checkbox"
+          className="toggle toggle-primary toggle-sm"
+          checked={filterTodayOnly}
+          onChange={(e) => { setFilterTodayOnly(e.target.checked); setCurrentPage(1); }}
+        />
+        <span className="text-sm">Today Only</span>
+      </label>
+
     </div>
 
-    <div className="bg-base-100 rounded-2xl p-6 shadow-md border border-base-200 hover:shadow-lg transition">
-      <div className="text-3xl mb-3">🗂</div>
-      <h3 className="font-semibold text-lg mb-2">স্বয়ংক্রিয় আর্কাইভ</h3>
-      <p className="text-base-content/70 text-sm">
-        যেসব ইফতার শেষ হয়ে গেছে সেগুলো স্বয়ংক্রিয়ভাবে আর্কাইভে চলে যাবে।
-      </p>
+    {/* Item + Area Filters (Pill Style) */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+      {/* Item */}
+      <select
+        className="select select-bordered rounded-xl"
+        value={filterItem}
+        onChange={(e) => { setFilterItem(e.target.value); setCurrentPage(1); }}
+      >
+        <option value="">🍽 All Items</option>
+        {IFTAR_ITEMS.filter((i) => i.key !== 'others').map((item) => (
+          <option key={item.key} value={item.key}>
+            {item.label}
+          </option>
+        ))}
+      </select>
+
+      {/* Area */}
+      <input
+        type="text"
+        placeholder="📍 Filter by Area"
+        className="input input-bordered rounded-xl"
+        value={filterArea}
+        onChange={(e) => { setFilterArea(e.target.value); setCurrentPage(1); }}
+      />
+
     </div>
 
   </div>
 </section>
-
-      {/* 3. Sort + Filter Section (redesigned) */}
-      <section className="container mx-auto max-w-6xl px-4 py-6 sm:py-8">
-        <div className="bg-base-100 rounded-2xl p-4 sm:p-6 shadow-md border border-base-200/60 space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-lg font-semibold text-base-content">
-              🔽 Sort & 🔎 Filter
-            </h3>
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="btn btn-ghost btn-sm text-primary"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-
-          {/* Single search + sort row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 lg:gap-4">
-            <div className="lg:col-span-5">
-              <label className="label py-0">
-                <span className="label-text">Search</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Masjid or Area দিয়ে খুঁজুন..."
-                className="input input-bordered w-full input-sm"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="lg:col-span-4">
-              <label className="label py-0">
-                <span className="label-text">Sort by</span>
-              </label>
-              <select
-                className="select select-bordered select-sm w-full"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="sm:col-span-2 lg:col-span-3 flex items-end gap-2 flex-wrap">
-              <label className="label cursor-pointer gap-2 flex-1 sm:flex-none">
-                <input
-                  type="checkbox"
-                  className="checkbox checkbox-primary checkbox-sm"
-                  checked={filterTodayOnly}
-                  onChange={(e) => setFilterTodayOnly(e.target.checked)}
-                />
-                <span className="label-text whitespace-nowrap">Today only</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Filter row: Item + Area */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-            <div>
-              <label className="label py-0">
-                <span className="label-text">Item</span>
-              </label>
-              <select
-                className="select select-bordered select-sm w-full"
-                value={filterItem}
-                onChange={(e) => setFilterItem(e.target.value)}
-              >
-                <option value="">All items</option>
-                {IFTAR_ITEMS.filter((i) => i.key !== 'others').map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label py-0">
-                <span className="label-text">Area</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Area..."
-                className="input input-bordered input-sm w-full"
-                value={filterArea}
-                onChange={(e) => setFilterArea(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* 4. Iftar Spot Cards */}
       <section className="container mx-auto max-w-7xl px-4 py-8 sm:py-12 pb-16">
         <h2 className="text-2xl sm:text-3xl font-bold text-base-content mb-6">
-          ইফতার স্পট
+          ইফতার স্পট 
         </h2>
         {spotsError && (
           <div className="alert alert-error rounded-xl mb-6">
@@ -325,21 +310,49 @@ const Home = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {filteredAndSorted.map((spot) => (
-              <IftarSpotCard
-                key={spot._id || spot.id}
-                spot={spot}
-                currentUserId={user?.email}
-                isAdmin={isAdmin(user)}
-                isExpired={spot.date && spot.date < todayStr}
-                onLike={handleLike}
-                onEdit={setEditSpot}
-                onDelete={handleDelete}
-                showViewDetails
-              />
-            ))}
-          </div>
+          <>
+            <p className="text-base-content/70 mb-4">
+              দেখাচ্ছি {((safePage - 1) * CARDS_PER_PAGE) + 1}–{Math.min(safePage * CARDS_PER_PAGE, totalItems)} (মোট {totalItems} স্পট)
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {paginatedSpots.map((spot) => (
+                <IftarSpotCard
+                  key={spot._id || spot.id}
+                  spot={spot}
+                  currentUserId={user?.email}
+                  isAdmin={isAdmin(user)}
+                  isExpired={spot.date && spot.date < todayStr}
+                  onLike={handleLike}
+                  onEdit={setEditSpot}
+                  onDelete={handleDelete}
+                  showViewDetails
+                />
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-10">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline"
+                  disabled={safePage <= 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                >
+                  ← আগে
+                </button>
+                <span className="px-4 py-2 text-sm text-base-content/80">
+                  পেজ {safePage} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline"
+                  disabled={safePage >= totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  পরের →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

@@ -30,7 +30,7 @@ export const createSpot = async (spot) => {
 };
 
 export const updateSpot = async (id, payload) => {
-  const { data } = await axios.put(`${IFTAR_SPOT_URL}/${id}`, payload);
+  const { data } = await axios.patch(`${IFTAR_SPOT_URL}/${id}`, payload);
   return data;
 };
 

@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router';
+import Swal from 'sweetalert2';
 import { AuthContext } from '../Context/AuthProvider';
 
 const SignIn = () => {
@@ -20,6 +21,14 @@ const SignIn = () => {
     setSubmitLoading(true);
     try {
       await signIn(email.trim(), password);
+      await Swal.fire({
+        icon: 'success',
+        title: 'সফল!',
+        text: 'লগইন সফল হয়েছে।',
+        confirmButtonText: 'ঠিক আছে',
+        timer: 2000,
+        timerProgressBar: true,
+      });
       navigate('/', { replace: true });
     } catch (err) {
       const msg =
@@ -39,6 +48,14 @@ const SignIn = () => {
     setSubmitLoading(true);
     try {
       await googleSignIn();
+      await Swal.fire({
+        icon: 'success',
+        title: 'সফল!',
+        text: 'লগইন সফল হয়েছে।',
+        confirmButtonText: 'ঠিক আছে',
+        timer: 2000,
+        timerProgressBar: true,
+      });
       navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || 'Google দিয়ে লগইন করা যাচ্ছে না।');

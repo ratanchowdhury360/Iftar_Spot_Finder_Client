@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-refresh/only-export-components */
 import React, { useState } from 'react';
 import { IFTAR_ITEMS, getItemImageSrc, getItemLabel } from '../data/iftarItems';
@@ -141,11 +142,11 @@ const IftarSpotCard = ({
             🗑 Delete
           </button>
         )}
-        {showViewDetails && (
+        {/* {showViewDetails && (
           <button type="button" className="btn btn-sm btn-ghost gap-1">
             👁 View Details
           </button>
-        )}
+        )} */}
       </div>
     </article>
   );

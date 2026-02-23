@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useContext } from 'react';
+import Swal from 'sweetalert2';
 import IftarSpotCard from '../Components/IftarSpotCard';
 import EditSpotModal from '../Components/EditSpotModal';
 import { useIftarSpots } from '../Context/IftarSpotsContext';
@@ -19,7 +20,27 @@ const ArchivedIftar = () => {
   }, [spots, todayStr]);
 
   const handleLike = (id) => toggleLike(id, user?.email);
-  const handleDelete = (id) => deleteSpot(id);
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'নিশ্চিত কি?',
+      text: 'ইফতার স্পট ডিলিট করলে এটি চিরতরে মুছে যাবে।',
+      showCancelButton: true,
+      confirmButtonText: 'হ্যাঁ, ডিলিট করুন',
+      cancelButtonText: 'বাতিল',
+      confirmButtonColor: '#dc2626',
+    });
+    if (!result.isConfirmed) return;
+    await deleteSpot(id);
+    await Swal.fire({
+      icon: 'success',
+      title: 'সফল!',
+      text: 'ইফতার স্পট সফলভাবে ডিলিট হয়েছে।',
+      confirmButtonText: 'ঠিক আছে',
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-b from-base-200/50 to-base-100">
@@ -61,7 +82,18 @@ const ArchivedIftar = () => {
           <EditSpotModal
             spot={editSpot}
             onClose={() => setEditSpot(null)}
-            onSave={(id, data) => { updateSpot(id, data); setEditSpot(null); }}
+            onSave={async (id, data) => {
+              await updateSpot(id, data);
+              setEditSpot(null);
+              await Swal.fire({
+                icon: 'success',
+                title: 'সফল!',
+                text: 'ইফতার স্পট সফলভাবে আপডেট হয়েছে।',
+                confirmButtonText: 'ঠিক আছে',
+                timer: 2000,
+                timerProgressBar: true,
+              });
+            }}
           />
         )}
       </div>
